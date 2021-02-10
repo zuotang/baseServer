@@ -1,0 +1,8 @@
+extends listPage.pug
+
+block top
+  h2.mt-2=title
+block list
+  div(class="userlist")
+    each user in users
+          +UserCard(user)

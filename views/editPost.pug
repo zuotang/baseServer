@@ -1,0 +1,15 @@
+extends layout.pug
+block content
+    form(action="/post/add", method="post", enctype="multipart/form-data")
+        div
+            label 标题: 
+            input(type="text", name="title")
+        div
+            label 封面: 
+            input(type="file", name="cover")
+            
+        div
+            label 内容: 
+            textarea(name="content", cols="30", rows="10")
+        div
+            button(type="submit") 提交

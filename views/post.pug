@@ -1,0 +1,19 @@
+extends layout.pug
+include components.pug
+block content
+  div(class="postPage")
+    if post.uid
+      .postdetail_user
+        +UserCard({id:post.uid,name:post.name,nickname:post.nickname,avatar:post.avatar})
+    div.card
+      .card-body
+        h3 !{post.content && post.content.replace(/\n/ig,"<br />")}
+        
+        each photo in post.photos
+                img(src=photo.src)
+        if post.video
+          video(src=`${post.dir}${post.video}`,width="100%",controls="controls")
+        +PostActions(post)
+block scripts
+  script(src="/web/js/zepto.min.js")
+  script(src="/web/js/post.js")

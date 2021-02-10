@@ -1,0 +1,9 @@
+extends listPage.pug
+block head
+  script(src="/web/js/spotlight.bundle.js")
+block top
+      +UserCard(user)
+block list
+      div(class="postlist")
+            each post in postList
+                  +PostCard(post)

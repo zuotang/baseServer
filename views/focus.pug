@@ -1,0 +1,13 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=0")
+    link(rel="manifest" href="/web/manifest.json" crossOrigin="use-credentials")
+    title=title
+    script(src="/web/js/photo.js")
+  body
+    if post.thumb
+      img(src=post.thumb)
+    div#status 粘贴图片
+    div#showImg

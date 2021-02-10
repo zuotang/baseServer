@@ -1,0 +1,74 @@
+//- 定义
+mixin Video({dir,video,thumb})
+  video.video(controls="controls" preload="none" src=`http://192.168.50.6:8383/${dir.replace('/home/tz/','')}/${video}`  poster=thumb )
+mixin UserCard({id,name,avatar,nickname,introduce,post_num,top,isupdate,last_updated})
+  div(class="cardBox userCard")
+          div(class="avatar")
+            a(href=`/user/${id}`,data-type="IMG",style=`background-image:url(${avatar})`)
+          div(class="cardContent")
+            a(href=`/user/${id}`,class="nickname")=nickname
+            a(href=`/user/${id}`,class="name")=`@${name}`
+            div(class="introduce") !{introduce}
+            if post_num > 0
+              div(class="index_num") 帖子:
+                span(class="num")=post_num
+            div(class="index_num small_hide") 
+              a(href=`/user/addtop/${id}`) 置顶#{top?top:''}
+            if top
+              div(class="index_num small_hide") 
+                a(href=`/user/deltop/${id}`) 取消置顶
+            if !isupdate
+             div(class="index_num small_hide") 
+              a(href=`/user/addupdate/${id}`) 更新#{top?top:''}
+            else
+              div(class="index_num small_hide") 
+                a(href=`/user/delupdate/${id}`) 取消更新
+              div(class="index_num small_hide")
+                a=last_updated
+            div(class="index_num small_hide")
+              a(href=`https://twitter.com/${name}` target="_blank") twitter
+
+mixin PostActions({pubdate,like_num,id,top,source_id,name})
+  div(class="index_num") 
+    span(class="num")=pubdate
+  div(class="index_num" target="_blank")
+    a(href=`https://twitter.com/${name}/status/${source_id}`) source
+  div(class="index_num") ❤ 
+    span(class="num")=like_num
+
+  div(class="index_btn") 
+    .btn.btn-link(get=`{"url":"/post/addtop/${id}","val":"#top_${id}","show":"#canceltop_${id}"}`)
+      i.tim-icons.iconfont.icon-shoucang1
+      i(id=`top_${id}`) #{top?top:''}
+  div(class=top>0?"index_btn":"index_btn hidden" id=`canceltop_${id}`) 
+      .btn.btn-link(get=`{"url":"/post/deltop/${id}","val":"#top_${id}","hidden":"#canceltop_${id}"}`)
+         i.tim-icons.iconfont.icon-shoucang
+  div(class="index_btn") 
+    .btn.btn-link(get=`{"url":"/post/del/${id}","del":"#post_${id}"}`)
+      i.tim-icons.iconfont.icon-shanchu
+
+mixin PostCard({id,thumb,dir,video,content,photos,uid,name,nickname,avatar,like_num,pubdate,top,isupdate,last_updated,title})
+    div(class="cardBox postCard" id=`post_${id}`)
+          if uid
+            +UserCard({id:uid,name:name,nickname:nickname,avatar:avatar,isupdate,last_updated})
+          
+          a.content(href=`/post/post/${id}`) !{title || content && content.replace(/\n/ig,"<br />")}
+          if video
+            .videoBox.postContentBox
+              +Video({dir,video,thumb})
+          if photos.length>0
+            div(class=`photo_box postContentBox photos_${photos.length}`)
+              each photo in photos
+                a(href=photo.src class="photo spotlight" style=`background-image:url(/file/thumb?img=${photo.src}&size=${photos.length>2?"sm":"md"})` data-description=content)
+          +PostActions({pubdate,like_num,name,source_id,id,top})
+
+
+
+
+mixin Edit
+    script(src="/web/js/zepto.min.js")
+    script(src="/web/js/edit.js")
+    link(rel="stylesheet" href="/web/styles/edit.css")
+
+mixin ScrollBlock
+    a(class="scrollBlock") 
