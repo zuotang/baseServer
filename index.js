@@ -3,27 +3,42 @@ const Router = require("@koa/router");
 const serve = require("koa-static");
 const range = require("koa-range");
 const koaBody = require("koa-body");
-const initMysql = require("./db");
-const views = require("koa-views");
 var path = require("path");
-//var ps = require("ps-node");
+var fs = require("fs");
 const file = require("./routes/file");
-const post = require("./routes/post");
+//const post = require("./routes/post");
 const user = require("./routes/user");
-var cors = require("koa2-cors");
+const shop = require("./routes/shop");
 
-const { upLoadFile, getPostList, pugFun, dayFormat } = require("./utils");
+const db = require("./middlewares/db");
+const authorize = require("./middlewares/authorize");
+var cors = require("koa2-cors");
 
 const app = new Koa();
 const router = new Router();
 
-app.on("error", (err, next) => {
-  console.error("server error", err);
-});
+// app.on("error", (err, next) => {
+//   console.error("server error", err);
+// });
 
-initMysql(app);
-app.use(cors());
+db(app);
+app.use(
+  cors({
+    origin: function (ctx) {
+      if (ctx.url === "/test") {
+        return "*"; // 允许来自所有域名请求
+      }
+      return "http://localhost:3000"; // 这样就能只允许 http://localhost:8080 这个域名的请求了
+    },
+    exposeHeaders: ["WWW-Authenticate", "Server-Authorization"],
+    maxAge: 5,
+    credentials: true,
+    allowMethods: ["GET", "POST", "DELETE"],
+    allowHeaders: ["Content-Type", "Authorization", "Accept"],
+  })
+);
 app.use(range);
+app.use(authorize.authorize);
 app.use(serve("./static", { gzip: true, maxage: 0 /* 1000 * 60 * 60 * 24 * 30*/ }));
 app.use(
   koaBody({
@@ -35,83 +50,36 @@ app.use(
   })
 );
 
-//json和渲染
-app.use(async function (ctx, next) {
-  if (ctx.request.query.format == "json") {
-    ctx.render = function (title, options) {
-      ctx.body = options;
-    };
-    let startTime = +new Date();
-    let res = await next();
-    console.log(+new Date() - startTime);
-  } else {
-    return views(path.join(__dirname, "views"), { extension: "pug" })(ctx, next);
-  }
-});
-
-router.post("/nodeedit", async (ctx, next) => {
-  let sql = ctx.request.body.sql;
-  let rc = ctx.request.body.text;
-  if (!rc && ctx.request.files.img) {
-    rc = (await upLoadFile(ctx.request.files.img)).url;
-  }
-  let res = await ctx.sql(sql, [rc]);
-  ctx.body = { code: 0, data: rc };
-});
-
-app.use(async (ctx, next) => {
-  if (ctx.request.query.format !== "json") {
-    let updateUser = await ctx.sql("select * from user where isupdate=1  order by last_updated desc limit 0,6");
-    let topPost = await ctx.sql("select p.*,u.name,u.nickname,u.avatar FROM post p LEFT JOIN user u on p.uid=u.id  where p.status=0 and p.top>0  order by p.update desc limit 0,6");
-    topPost = await Promise.all(
-      topPost.map(async (post) => {
-        let photos = await ctx.sql("SELECT src,width,height FROM photo WHERE pid=?", [post.id]);
-        post.photos = photos;
-        post.pubdate = dayFormat(post.pubdate);
-        return post;
-      })
-    );
-    ctx.commonRender = {
-      topPost,
-      updateUser,
-    };
-  }
-  await next();
-});
-
 router.use("/file", file.routes());
-router.use("/post", post.routes());
-
+//router.use("/post", post.routes());
 router.use("/user", user.routes());
+router.use("/shop", shop.routes());
 
+function readHtml(htmlPath) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(htmlPath, function (err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data.toString());
+      }
+    });
+  });
+}
+
+//显示客户端首页
 router.get("/", async (ctx, next) => {
-  //let banner = await ctx.sql("select * from banner");
-  let updateUser = await ctx.sql("select * from user where isupdate=1  order by last_updated desc limit 0,6");
-  let topPost = await ctx.sql("select p.*,u.name,u.nickname,u.avatar FROM post p LEFT JOIN user u on p.uid=u.id  where p.status=0 and p.top>0  order by p.update desc limit 0,6");
-  topPost = await Promise.all(
-    topPost.map(async (post) => {
-      let photos = await ctx.sql("SELECT src FROM photo WHERE pid=?", [post.id]);
-      post.photos = photos;
-      post.pubdate = dayFormat(post.pubdate);
-      return post;
-    })
-  );
-  function getRandomPage(totalPage) {
-    return Math.ceil(Math.random() * totalPage);
-  }
-  //当前参数没有page时获取随机页面
-  let { num } = await ctx.sqlOne(`SELECT count(id) as num FROM post WHERE status = 0`);
-  let page_size = ctx.request.query.page_size || 20;
-  let totalPage = parseInt(num / page_size);
-  let currentRandom = ctx.request.query.page || getRandomPage(totalPage);
+  console.log(await ctx.sql("SELECT * FROM user"));
+  let htmlStr = await readHtml(__dirname + "/static/client/index.html");
+  ctx.body = htmlStr;
+});
 
-  let posts = await getPostList({ ctx, query: { sort: "pubdate", page: currentRandom } });
-  let randomPage = getRandomPage(posts.totalPage);
-
-  return ctx.render("index", { ...pugFun, ...ctx.commonRender, title: "首页", updateUser, topPost, ...posts, path: ctx.path, randomPage, test: () => "asdf" });
+//显示管理系统
+router.get("/admin", async (ctx, next) => {
+  let htmlStr = await readHtml(__dirname + "/static/admin/index.html");
+  ctx.body = htmlStr;
 });
 
 app.use(router.routes());
 app.use(router.allowedMethods());
-
 app.listen(3001);

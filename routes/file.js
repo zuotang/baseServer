@@ -12,8 +12,11 @@ router.post("/uploadfile", async (ctx, next) => {
   // 上传单个文件
   const file = ctx.request.files.file;
   // 获取上传文件
-  await upLoadFile(file);
-  return (ctx.body = "上传成功！");
+  let resFile = await upLoadFile(file);
+  return (ctx.body = {
+    status: 0,
+    data: resFile,
+  });
 });
 
 // 递归创建目录
@@ -31,7 +34,8 @@ async function mkdirs(dirname, callback) {
 }
 
 function mkdirFormFile(file) {
-  let dirPath = file.substr(0, file.lastIndexOf("/"));
+  let dirPath = path.dirname(file);
+
   return new Promise(async (resolve, reject) => {
     let isExi = await isExists(dirPath);
     if (isExi) {
@@ -59,7 +63,7 @@ function isExists(path) {
     });
   });
 }
-
+//缩略图
 router.get("/thumb", async (ctx, next) => {
   let { img, size } = ctx.request.query;
   //xs sm md
@@ -79,6 +83,7 @@ router.get("/thumb", async (ctx, next) => {
   let setHeight = setWidth;
   let resImg = path.join("/thumbnail", size, handleImg);
   let outputPath = path.join(__dirname, "../static", resImg);
+  let ext = path.extname(outputPath).substr(1);
 
   //缩略图存在 直接返回
   let isExi = await isExists(outputPath);
@@ -105,7 +110,7 @@ router.get("/thumb", async (ctx, next) => {
         });
       });
     }
-
+    console.log(filePath);
     await mkdirFormFile(outputPath);
     await new Promise((resolve, reject) => {
       gm(filePath)
@@ -128,7 +133,7 @@ router.get("/thumb", async (ctx, next) => {
     });
   }
   const src = fs.createReadStream(outputPath);
-  ctx.type = "image/jpg";
+  ctx.type = "image/" + ext;
   ctx.set("Cache-Control", "max-age=2592000");
   ctx.status = 200;
   ctx.body = src;

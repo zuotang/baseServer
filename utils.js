@@ -4,19 +4,32 @@ const dayjs = require("dayjs");
 const relativeTime = require("dayjs/plugin/relativeTime");
 dayjs.extend(relativeTime);
 function upLoadFile(file) {
+  //console.log(file);
+
+  const ext = path.extname(file.name);
+  let fileTime = +new Date(file.lastModifiedDate);
+  let fileName = `${fileTime}_${parseInt(Math.random() * 10000)}${ext}`;
+  const baseDir = path.join(__dirname, "static/upload");
+  const DayStr = dayjs(fileTime).format("YYYY-MM-DD");
+  const DayDir = path.join(baseDir, DayStr);
+  //根据日期创建目录
+  if (!fs.existsSync(DayDir)) {
+    fs.mkdirSync(DayDir);
+  }
   // 创建可读流
   const reader = fs.createReadStream(file.path);
-  let fileName = file.name;
-  let filePath = path.join(__dirname, "static/upload") + `/${fileName}`;
+
+  let filePath = DayDir + `/${fileName}`;
+
   // 创建可写流
   const upStream = fs.createWriteStream(filePath);
   return new Promise((resove, reject) => {
     reader.pipe(upStream);
     reader.on("end", () => {
       resove({
-        url: `/upload/${fileName}`,
-        fileName,
-        filePath,
+        url: `/upload/${DayStr}/${fileName}`,
+        name: fileName,
+        path: filePath,
       });
     });
     reader.on("error", (err) => {
