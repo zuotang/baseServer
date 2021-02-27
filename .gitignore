@@ -11,7 +11,8 @@
 # production
 /build
 
-/static
+/static/upload
+/static/thumbnail
 
 # misc
 .DS_Store
