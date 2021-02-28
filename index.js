@@ -28,7 +28,7 @@ app.use(
       if (ctx.url === "/test") {
         return "*"; // 允许来自所有域名请求
       }
-      return "http://localhost:3000"; // 这样就能只允许 http://localhost:8080 这个域名的请求了
+      return ctx.headers.origin; // 这样就能只允许 http://localhost:8080 这个域名的请求了
     },
     exposeHeaders: ["WWW-Authenticate", "Server-Authorization"],
     maxAge: 5,

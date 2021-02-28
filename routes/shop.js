@@ -43,10 +43,10 @@ router.get("/list", async (ctx, next) => {
 });
 
 router.post("/add", auth, admin, async (ctx, next) => {
-  let { name, attr = [], photo = [], price, proxy_name, proxy_price } = ctx.request.body;
+  let { name, attr = [], photo = [], price, proxy_name, proxy_price,brand } = ctx.request.body;
   let addTime = new Date();
   //添加主体
-  let { insertId: id } = await ctx.sql("INSERT INTO shop (name,proxy_name,price,proxy_price,add_time) VALUES (?,?,?,?,?)", [name, proxy_name, price, proxy_price, addTime]);
+  let { insertId: id } = await ctx.sql("INSERT INTO shop (name,proxy_name,price,proxy_price,brand,add_time) VALUES (?,?,?,?,?,?)", [name, proxy_name, price, proxy_price,brand, addTime]);
 
   //添加附加
   photo.map(async (item) => {
@@ -72,9 +72,9 @@ router.post("/status", auth, admin, async (ctx, next) => {
 });
 
 router.post("/edit", auth, admin, async (ctx, next) => {
-  let { id, name, attr = [], photo = [], price, proxy_name, proxy_price } = ctx.request.body;
+  let { id, name, attr = [], photo = [], price, proxy_name, proxy_price,brand } = ctx.request.body;
   //更新主体
-  await ctx.sql("UPDATE shop SET `name`=?,proxy_name=?,price=?,proxy_price=? WHERE id=?", [name, proxy_name, price, proxy_price, id]);
+  await ctx.sql("UPDATE shop SET `name`=?,proxy_name=?,price=?,proxy_price=?,brand=? WHERE id=?", [name, proxy_name, price, proxy_price,brand, id]);
 
   //删除
   await ctx.sql("DELETE FROM shop_photo WHERE sid=?", [id]);
