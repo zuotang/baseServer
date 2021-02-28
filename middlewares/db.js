@@ -1,13 +1,25 @@
 const mysql = require("mysql");
-
+let isDev=false;
 module.exports = async function (app) {
-  var connection = mysql.createConnection({
-    host: "localhost",
-    user: "tz",
-    password: "wysj3910",
-    port: "3306",
-    database: "shop",
-  });
+  var connection ;
+  if(isDev){
+    connection=mysql.createConnection({
+      host: "47.115.114.3",
+      user: "tz",
+      password: "wysj3910",
+      port: "3306",
+      database: "shop",
+    });
+  }else{
+    connection= mysql.createConnection({
+      host: "localhost",
+      user: "tz",
+      password: "wysj3910",
+      port: "3306",
+      database: "shop",
+    });
+  }
+ 
 
   connection.connect();
   let ctx = app.context;

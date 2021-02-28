@@ -9,6 +9,7 @@ const file = require("./routes/file");
 //const post = require("./routes/post");
 const user = require("./routes/user");
 const shop = require("./routes/shop");
+const web = require("./routes/web");
 
 const db = require("./middlewares/db");
 const authorize = require("./middlewares/authorize");
@@ -54,7 +55,7 @@ router.use("/file", file.routes());
 //router.use("/post", post.routes());
 router.use("/user", user.routes());
 router.use("/shop", shop.routes());
-
+router.use("/web", web.routes());
 function readHtml(htmlPath) {
   return new Promise((resolve, reject) => {
     fs.readFile(htmlPath, function (err, data) {
@@ -82,4 +83,4 @@ router.get("/admin", async (ctx, next) => {
 
 app.use(router.routes());
 app.use(router.allowedMethods());
-app.listen(3001);
+app.listen(80);
