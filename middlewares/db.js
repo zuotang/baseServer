@@ -6,7 +6,7 @@ module.exports = async function (app) {
     user: "tz",
     password: "wysj3910",
     port: "3306",
-    database: "xiaoxi",
+    database: "shop",
   });
 
   connection.connect();
