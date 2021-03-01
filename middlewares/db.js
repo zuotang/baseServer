@@ -1,5 +1,5 @@
 const mysql = require("mysql");
-let isDev=false;
+let isDev=true;
 module.exports = async function (app) {
   var connection ;
   if(isDev){
