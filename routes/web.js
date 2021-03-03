@@ -22,4 +22,22 @@ router.get("/config", async (ctx, next) => {
     data: res,
   };
 });
+router.post("/add", async (ctx, next) => {
+  let { name, value, note } = ctx.request.body;
+  let { insertId: id } = await ctx.sql("INSERT INTO web (name,value,note) VALUES (?,?,?)", [name, value, note]);
+  ctx.body = {
+    status: 0,
+    data: id,
+  };
+});
+
+router.post("/edit", async (ctx, next) => {
+  let { id, name, value, note } = ctx.request.body;
+  let res = await ctx.sqlOne("UPDATE web SET `name`=?,value=?,note=? WHERE id=?", [name, value, note, id]);
+  ctx.body = {
+    status: 0,
+    data: res,
+  };
+});
+
 module.exports = router;

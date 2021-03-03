@@ -1,17 +1,17 @@
 const mysql = require("mysql");
-let isDev=true;
+let isDev = true;
 module.exports = async function (app) {
-  var connection ;
-  if(isDev){
-    connection=mysql.createConnection({
+  var connection;
+  if (isDev) {
+    connection = mysql.createConnection({
       host: "47.115.114.3",
       user: "tz",
       password: "wysj3910",
       port: "3306",
       database: "shop",
     });
-  }else{
-    connection= mysql.createConnection({
+  } else {
+    connection = mysql.createConnection({
       host: "localhost",
       user: "tz",
       password: "wysj3910",
@@ -19,7 +19,6 @@ module.exports = async function (app) {
       database: "shop",
     });
   }
- 
 
   connection.connect();
   let ctx = app.context;
@@ -29,6 +28,9 @@ module.exports = async function (app) {
     return new Promise((resolve, reject) => {
       connection.query(...arguments, function (err, result) {
         if (err) {
+          if (err.code === "PROTOCOL_CONNECTION_LOST" || err.code === "ER_CON_COUNT_ERROR" || err.code === "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR" || err.code === "ECONNRESET") {
+            connection.connect();
+          }
           reject(err);
           return;
         }
@@ -44,12 +46,14 @@ module.exports = async function (app) {
   function handleError(err) {
     if (err) {
       // 如果是连接断开，自动重新连接
-
-      if (err.code === "PROTOCOL_CONNECTION_LOST" || err.code === "ER_CON_COUNT_ERROR") {
+      setTimeout(() => {
         connection.connect();
-      } else {
-        console.error(err.stack || err);
-      }
+      }, 5000);
+      // if (err.code === "PROTOCOL_CONNECTION_LOST" || err.code === "ER_CON_COUNT_ERROR") {
+      //   connection.connect();
+      // } else {
+      //   console.error(err.stack || err);
+      // }
     }
   }
   ctx.db.on("error", handleError);
