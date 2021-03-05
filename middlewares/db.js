@@ -1,14 +1,14 @@
 const mysql = require("mysql");
-let isDev = true;
+let isDev = false;
 module.exports = async function (app) {
   var connection;
   if (isDev) {
     connection = mysql.createConnection({
-      host: "47.115.114.3",
-      user: "tz",
-      password: "wysj3910",
+      host: "192.168.50.6",
+      user: "root",
+      password: "Wysj3910",
       port: "3306",
-      database: "shop",
+      database: "xiaoxishop",
     });
   } else {
     connection = mysql.createConnection({
