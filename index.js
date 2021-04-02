@@ -14,6 +14,7 @@ const web = require("./routes/web");
 const db = require("./middlewares/db");
 const authorize = require("./middlewares/authorize");
 var cors = require("koa2-cors");
+const compress = require("koa-compress");
 
 const app = new Koa();
 const router = new Router();
@@ -22,13 +23,24 @@ const router = new Router();
 //   console.error("server error", err);
 // });
 
+//GZIP
+app.use(
+  compress({
+    threshold: 2048, //数据超过1kb时压缩
+    gzip: {
+      flush: require("zlib").constants.Z_SYNC_FLUSH,
+    },
+    deflate: {
+      flush: require("zlib").constants.Z_SYNC_FLUSH,
+    },
+    br: false, // disable brotli
+  })
+);
+
 db(app);
 app.use(
   cors({
     origin: function (ctx) {
-      if (ctx.url === "/test") {
-        return "*"; // 允许来自所有域名请求
-      }
       return ctx.headers.origin; // 这样就能只允许 http://localhost:8080 这个域名的请求了
     },
     exposeHeaders: ["WWW-Authenticate", "Server-Authorization"],
@@ -40,7 +52,8 @@ app.use(
 );
 app.use(range);
 app.use(authorize.authorize);
-app.use(serve("./static", { gzip: true, maxage: 0 /* 1000 * 60 * 60 * 24 * 30*/ }));
+
+app.use(serve("./static", { gzip: false, maxage: 1000 * 60 * 10 })); //十分钟缓存
 app.use(
   koaBody({
     multipart: true, // 支持文件上传
@@ -51,8 +64,20 @@ app.use(
   })
 );
 
+//二级域名处理 添加servername
+app.use(async function (ctx, next) {
+  let hostnames = ctx.hostname.split(".");
+  if (hostnames.length >= 3) {
+    ctx.servername = hostnames[0];
+  } else {
+    ctx.servername = "www";
+  }
+  let res = await ctx.sqlOne("SELECT id FROM client WHERE name=?", [ctx.servername]);
+  ctx.cid = res ? res.id : 1;
+  await next();
+});
+
 router.use("/file", file.routes());
-//router.use("/post", post.routes());
 router.use("/user", user.routes());
 router.use("/shop", shop.routes());
 router.use("/web", web.routes());
@@ -70,7 +95,6 @@ function readHtml(htmlPath) {
 
 //显示客户端首页
 router.get("/", async (ctx, next) => {
-  console.log(await ctx.sql("SELECT * FROM user"));
   let htmlStr = await readHtml(__dirname + "/static/client/index.html");
   ctx.body = htmlStr;
 });

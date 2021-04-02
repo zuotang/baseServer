@@ -1,14 +1,14 @@
 const mysql = require("mysql");
-let isDev = false;
+let isDev = true;
 module.exports = async function (app) {
   var connection;
   if (isDev) {
     connection = mysql.createConnection({
-      host: "192.168.50.6",
-      user: "root",
-      password: "Wysj3910",
+      host: "47.115.114.3",
+      user: "tz",
+      password: "wysj3910",
       port: "3306",
-      database: "xiaoxishop",
+      database: "shop",
     });
   } else {
     connection = mysql.createConnection({
@@ -28,9 +28,6 @@ module.exports = async function (app) {
     return new Promise((resolve, reject) => {
       connection.query(...arguments, function (err, result) {
         if (err) {
-          if (err.code === "PROTOCOL_CONNECTION_LOST" || err.code === "ER_CON_COUNT_ERROR" || err.code === "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR" || err.code === "ECONNRESET") {
-            connection.connect();
-          }
           reject(err);
           return;
         }
